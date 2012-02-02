@@ -348,6 +348,9 @@ class Model(dict):
         '''Execute a single SELECT SQL command and return a single row of the result.'''
         return self.sql(*args).fetchone()
     
+    def alter(self, alter_query):
+        return self.sql(alter_query);
+    
     def create(self, data_model, createTable=True, createType=True):
         '''Create the SQL tables using the data_model text description. An example text description is shown below. It
         defines two tables, user and files. Note that the primary key of id must be defined as "integer" instead of
