@@ -36,8 +36,8 @@ url = "http://176.34.228.163/ps/o2prioritymoments/"
 #url = "http://212.64.158.152/o2uk/services/o2prioritymoments/"
 client = httpClient()
 
-def getTopRecomm(number):
-    host = url+'recomms/top?type=PriorityMoments&numRecos='+str(number)
+def getTopRecomm(order):
+    host = url+'recomms/top?type=PriorityMoments&numRecos=20&order='+str(order)
     req = urllib2.Request(host, None, headers)
     response = client._launchRequest(req)
     return response.read()
@@ -47,7 +47,7 @@ def getRecommByUser(msisdn, number):
     print(host)
     req = urllib2.Request(host, None, headers)
     response = client._launchRequest(req)
-    return response.code, response.read()  
+    return response.read()  
 
 def getRecommSimilar(itemId, number):
     host = url+'recomms/similar?type=PriorityMoments&itemId='+str(itemId)+'&numRecos='+str(number)+'&similarityType=collaborative_filter'

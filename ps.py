@@ -117,9 +117,8 @@ def rateEvent():
 def top():
     def PUT(request, entity):
         try:
-            num = entity
-            print(num)
-            res = PSHttpClient.getTopRecomm(num)
+            order = entity
+            res = PSHttpClient.getTopRecomm(order)
             logging.debug("top found = OK")
             return str(res)
         except: raise restlite.Status, '400 Error top recomms'
@@ -200,6 +199,31 @@ def eventByUser():
         
     return locals()
 
+@restlite.resource
+def eventByItem():
+    def GET(request):
+        offerId = request['PATH_INFO'][1:] if request['PATH_INFO'] else ''
+        if not offerId:
+            rows = m.sql('SELECT * FROM events')
+            result = fillResults(rows)
+                                         
+        else: 
+            vars = offerId.split('/')  
+            if len(vars)==2 :              
+                rows = m.sql('SELECT * FROM events WHERE offerId=? AND type=?', (vars[0], vars[1]))  
+            else:
+                rows = m.sql('SELECT * FROM events WHERE offerId=?', (vars[0],))   
+                  
+            if rows is None: raise restlite.Status, '404 Event Not Found'
+            
+            result = fillResults(rows)
+        
+        salida = {'totalResults':len(result), 'data': result} if result is not None else ''
+        logging.debug("events found = %s", str(len(result)))    
+        return request.response(('events', salida))
+        
+    return locals()
+
 
 # Insert in database the new event and build JSON for PS Request
 def buildJSonEvent(entity, eventType, duration, recommId, rating):
@@ -233,7 +257,7 @@ def buildJSonEvent(entity, eventType, duration, recommId, rating):
 def fillResults(rows):
     result = []
     for row in rows:
-        result.append({"eventId": row[0], "itemId":row[1], "type":row[2] ,"userId": row[3]})
+        result.append({"eventId": row[0], "offerId":row[1], "type":row[2] ,"userId": row[3]})
     return result
 
 
@@ -242,8 +266,9 @@ routes = [
     (r'GET,PUT,POST /(?P<type>((xml)|(plain)))/(?P<path>.*)', 'GET,PUT,POST /%(path)s', 'ACCEPT=text/%(type)s'),
     (r'GET,PUT,POST /(?P<type>((json)))/(?P<path>.*)', 'GET,PUT,POST /%(path)s', 'ACCEPT=application/%(type)s'),
     (r'GET /events/user', eventByUser),
+    (r'GET /events/item', eventByItem),
     (r'GET /events', event),
-    (r'GET /recomms/top\?num=(?P<num>.*)', 'PUT /recomms/top', 'CONTENT_TYPE=text/plain', 'BODY=%(num)s', top),
+    (r'GET /recomms/top\?order=(?P<order>.*)', 'PUT /recomms/top', 'CONTENT_TYPE=text/plain', 'BODY=%(order)s', top),
     (r'GET /recomms/similar\?itemId=(?P<itemId>.*)', 'PUT /recomms/similar', 'CONTENT_TYPE=text/plain', 'BODY=%(itemId)s', similar),
     (r'GET /recomms/byUser\?msisdn=(?P<msisdn>.*)', 'PUT /recomms/byUser', 'CONTENT_TYPE=text/plain', 'BODY=%(msisdn)s', byUser),
     (r'POST /event/view', 'POST /event/view', 'CONTENT_TYPE=text/plain', viewEvent),
